@@ -55,21 +55,41 @@ def _get_train_data_loader(batch_size, training_dir):
     return torch.utils.data.DataLoader(train_ds, batch_size=batch_size)
 
 
-def train(model, train_loader, epochs, optimizer, loss_fn, device):
-    """
-    This is the training method that is called by the PyTorch training script. The parameters
-    passed are as follows:
-    model        - The PyTorch model that we wish to train.
-    train_loader - The PyTorch DataLoader that should be used during training.
-    epochs       - The total number of epochs to train for.
-    optimizer    - The optimizer to use during training.
-    loss_fn      - The loss function used for training.
-    device       - Where the model and data should be loaded (gpu or cpu).
-    """
-    
-    # TODO: Paste the train() method developed in the notebook here.
-
-    pass
+def train(model, train_loader, epochs, optimizer, loss_fn, device, use_sigmoid=True):
+    for epoch in range(1, epochs + 1):
+        model.train()  # Đặt mô hình vào chế độ huấn luyện
+        total_loss = 0
+        correct_predictions = 0
+        total_samples = 0
+        
+        for batch in train_loader:         
+            batch_X, batch_y = batch
+            
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+            
+            optimizer.zero_grad()                 # Xóa gradient cũ
+            output = model(batch_X)               # Dự đoán đầu ra
+            
+            # Nếu loss function là BCELoss, đảm bảo đầu ra qua sigmoid
+            if use_sigmoid:
+                output = torch.sigmoid(output)
+            
+            loss = loss_fn(output, batch_y)       # Tính loss
+            loss.backward()                       # Lan truyền ngược gradient
+            optimizer.step()                      # Cập nhật trọng số
+            
+            total_loss += loss.item()             # Lưu tổng loss
+            
+            # Đo độ chính xác (nếu là bài toán phân loại)
+            preds = (output > 0.5).float()        # Dự đoán lớp (0 hoặc 1)
+            correct_predictions += (preds == batch_y).sum().item()
+            total_samples += batch_y.size(0)
+        
+        avg_loss = total_loss / len(train_loader)
+        accuracy = correct_predictions / total_samples * 100
+        
+        print("Epoch: {}, BCELoss: {:.4f}, Accuracy: {:.2f}%".format(epoch, avg_loss, accuracy))
 
 
 if __name__ == '__main__':
