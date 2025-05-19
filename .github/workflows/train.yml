@@ -1,0 +1,42 @@
+name: SageMaker Sentiment Analysis CI/CD - Development
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install boto3 sagemaker pandas wget s3fs python-dotenv 
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Train model
+      env:
+        PREFIX: ${{ secrets.PREFIX }}
+        GITHUB_SHA: ${{ github.sha }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
+      run: |
+        cd Project
+        python train_job.py
+          
+          
