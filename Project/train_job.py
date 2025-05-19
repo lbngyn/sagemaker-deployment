@@ -20,13 +20,12 @@ from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 
 load_dotenv()
-REGION = os.environ['AWS_DEFAULT_REGION']
+REGION = os.environ['AWS_REGION']
 session = sagemaker.Session(boto_session=boto3.session.Session(region_name=REGION))
 BUCKET_NAME = session.default_bucket()
 PREFIX = os.environ['PREFIX']
 # Replace with your IAM role arn that has enough access (e.g. SageMakerFullAccess)
 IAM_ROLE_NAME = os.environ['IAM_ROLE_NAME']
-# GITHUB_SHA = os.environ['GITHUB_SHA']
 ACCOUNT_ID = session.boto_session.client(
     'sts').get_caller_identity()['Account']
 
@@ -106,43 +105,27 @@ def main():
     
     print("Starting model training...")
     estimator.fit({'training': input_data})
+    with open("model_data.txt", "w") as f:
+        f.write(f"{estimator.model_data}")
+
     training_job_name = estimator.latest_training_job.name
     hyperparameters_dictionary = estimator.hyperparameters()
-
+    print("Training_job_name:", training_job_name)
+    print("hyperparameters_dictionary:", hyperparameters_dictionary)
     report = pd.read_csv(f's3://{BUCKET_NAME}/{PREFIX}/reports.csv')
-    print(len(report))
-    # while(len(report[report['commit_hash']==GITHUB_SHA]) == 0):
-    #     report = pd.read_csv(f's3://{BUCKET_NAME}/{PREFIX}/reports.csv')
-
-    # res = report[report['commit_hash']==GITHUB_SHA]
-    # metrics_dataframe = res[['Train_MSE', 'Validation_MSE']]
-
-    # message = (f"## Training Job Submission Report\n\n"
-    #         f"Training Job name: '{training_job_name}'\n\n"
-    #             "Model Artifacts Location:\n\n"
-    #         f"'s3://{BUCKET_NAME}/{PREFIX}/output/{training_job_name}/output/model.tar.gz'\n\n"
-    #         f"Model hyperparameters: {hyperparameters_dictionary}\n\n"
-    #             "See the Logs in a few minute at: "
-    #         f"[CloudWatch](https://{REGION}.console.aws.amazon.com/cloudwatch/home?region={REGION}#logStream:group=/aws/sagemaker/TrainingJobs;prefix={training_job_name})\n\n"
-    #             "If you merge this pull request the resulting endpoint will be avaible this URL:\n\n"
-    #         f"'https://runtime.sagemaker.{REGION}.amazonaws.com/endpoints/{training_job_name}/invocations'\n\n"
-    #         f"## Training Job Performance Report\n\n"
-    #         f"{metrics_dataframe.to_markdown(index=False)}\n\n"
-    #         )
-    # print(message)
-
-    # # Write metrics to file
-    # with open('details.txt', 'w') as outfile:
-    #     outfile.write(message)
-    #     # Save model information for deployment
-    #     job_info = {
-    #         'model_data': estimator.model_data,
-    #         'training_job_name': estimator.latest_training_job.name,
-    #         's3_input_data': input_data
-    #     } 
-    
-    # save_job_info(job_info, args.output_path)
-    print("Training completed successfully!")
+    message = (f"## Training Job Submission Report\n\n"
+            f"Training Job name: '{training_job_name}'\n\n"
+                "Model Artifacts Location:\n\n"
+            f"'s3://{BUCKET_NAME}/{PREFIX}/output/{training_job_name}/output/model.tar.gz'\n\n"
+            f"Model hyperparameters: {hyperparameters_dictionary}\n\n"
+                "See the Logs in a few minute at: "
+            f"[CloudWatch](https://{REGION}.console.aws.amazon.com/cloudwatch/home?region={REGION}#logStream:group=/aws/sagemaker/TrainingJobs;prefix={training_job_name})\n\n"
+                "If you merge this pull request the resulting endpoint will be avaible this URL:\n\n"
+            f"'https://runtime.sagemaker.{REGION}.amazonaws.com/endpoints/{training_job_name}/invocations'\n\n"
+            f"## Training Job Performance Report\n\n"
+            f"{report.to_markdown(index=False)}\n\n"
+            )
+    print(message)
 
 if __name__ == "__main__":
     main()
