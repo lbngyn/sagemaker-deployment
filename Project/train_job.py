@@ -1,13 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-Training job script for sentiment analysis model using SageMaker.
-This script handles data preparation, uploading to S3, and training the PyTorch model.
-"""
-
 import os
-import pickle
 
 import pandas as pd
 import sagemaker
@@ -17,7 +8,6 @@ import boto3
 from sagemaker.pytorch import PyTorch
 from prepare_data import IMDbDataPreparation
 from dotenv import load_dotenv
-from botocore.exceptions import ClientError
 
 load_dotenv()
 REGION = os.environ['AWS_REGION']
