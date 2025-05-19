@@ -70,8 +70,9 @@ def main():
     # print(data['train_X_len'])
     # print(data['test_X_len'])
     # # Upload data to S3
-    data_dir = './data/processed'
-    input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
+    # data_dir = './data/processed'
+    # input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
+    input_data = f's3://{BUCKET_NAME}/{PREFIX}'
     
     # Create and run PyTorch estimator
     estimator = PyTorch(
