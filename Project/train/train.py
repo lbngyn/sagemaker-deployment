@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 import torch.optim as optim
 import torch.utils.data
-
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from model import LSTMClassifier
 
 def model_fn(model_dir):
@@ -52,13 +52,28 @@ def _get_train_data_loader(batch_size, training_dir):
 
     return torch.utils.data.DataLoader(train_ds, batch_size=batch_size)
 
+def _get_test_data_loader(batch_size, training_dir):
+    """Get test data loader."""
+    print("Get test data loader.")
+
+    test_data = pd.read_csv(os.path.join(training_dir, "test.csv"), header=None, names=None)
+    
+    test_y = torch.from_numpy(test_data[[0]].values).float().squeeze()
+    test_X = torch.from_numpy(test_data.drop([0], axis=1).values).long()
+
+    test_ds = torch.utils.data.TensorDataset(test_X, test_y)
+    return torch.utils.data.DataLoader(test_ds, batch_size=batch_size)
+
 
 def train(model, train_loader, epochs, optimizer, loss_fn, device, use_sigmoid=True):
+    """Train the model and return metrics for each epoch."""
+    training_metrics = []
+    
     for epoch in range(1, epochs + 1):
-        model.train()  # Đặt mô hình vào chế độ huấn luyện
+        model.train()
         total_loss = 0
-        correct_predictions = 0
-        total_samples = 0
+        predictions = []
+        true_labels = []
         
         for batch in train_loader:         
             batch_X, batch_y = batch
@@ -66,29 +81,80 @@ def train(model, train_loader, epochs, optimizer, loss_fn, device, use_sigmoid=T
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
             
-            optimizer.zero_grad()                 # Xóa gradient cũ
-            output = model(batch_X)               # Dự đoán đầu ra
+            optimizer.zero_grad()
+            output = model(batch_X)
             
-            # Nếu loss function là BCELoss, đảm bảo đầu ra qua sigmoid
             if use_sigmoid:
                 output = torch.sigmoid(output)
             
-            loss = loss_fn(output, batch_y)       # Tính loss
-            loss.backward()                       # Lan truyền ngược gradient
-            optimizer.step()                      # Cập nhật trọng số
+            loss = loss_fn(output, batch_y)
+            loss.backward()
+            optimizer.step()
             
-            total_loss += loss.item()             # Lưu tổng loss
+            total_loss += loss.item()
             
-            # Đo độ chính xác (nếu là bài toán phân loại)
-            preds = (output > 0.5).float()        # Dự đoán lớp (0 hoặc 1)
-            correct_predictions += (preds == batch_y).sum().item()
-            total_samples += batch_y.size(0)
+            pred = (output > 0.5).float()
+            predictions.extend(pred.cpu().numpy())
+            true_labels.extend(batch_y.cpu().numpy())
         
+        # Calculate metrics
         avg_loss = total_loss / len(train_loader)
-        accuracy = correct_predictions / total_samples * 100
+        accuracy = accuracy_score(true_labels, predictions)
+        precision = precision_score(true_labels, predictions)
+        recall = recall_score(true_labels, predictions)
+        f1 = f1_score(true_labels, predictions)
         
-        print("Epoch: {}, BCELoss: {:.4f}, Accuracy: {:.2f}%".format(epoch, avg_loss, accuracy))
+        metrics = {
+            'epoch': epoch,
+            'train_loss': avg_loss,
+            'train_accuracy': accuracy,
+            'train_precision': precision,
+            'train_recall': recall,
+            'train_f1': f1
+        }
+        
+        training_metrics.append(metrics)
+        print(f"Epoch: {epoch}, Loss: {avg_loss:.4f}, Accuracy: {accuracy:.4f}, F1: {f1:.4f}")
+    
+    return training_metrics
 
+def evaluate(model, test_loader, device, loss_fn):
+    """Evaluate the model on test data."""
+    model.eval()
+    test_loss = 0
+    predictions = []
+    true_labels = []
+    
+    with torch.no_grad():
+        for batch_X, batch_y in test_loader:
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+            
+            output = model(batch_X)
+            output = torch.sigmoid(output)
+            
+            test_loss += loss_fn(output, batch_y).item()
+            
+            pred = (output > 0.5).float()
+            predictions.extend(pred.cpu().numpy())
+            true_labels.extend(batch_y.cpu().numpy())
+    
+    # Calculate metrics
+    test_loss = test_loss / len(test_loader)
+    accuracy = accuracy_score(true_labels, predictions)
+    precision = precision_score(true_labels, predictions)
+    recall = recall_score(true_labels, predictions)
+    f1 = f1_score(true_labels, predictions)
+    
+    metrics = {
+        'test_loss': test_loss,
+        'test_accuracy': accuracy,
+        'test_precision': precision,
+        'test_recall': recall,
+        'test_f1': f1
+    }
+    
+    return metrics
 
 if __name__ == '__main__':
     # All of the model parameters and training parameters are sent as arguments when the script
@@ -119,6 +185,10 @@ if __name__ == '__main__':
     parser.add_argument('--data-dir', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
     parser.add_argument('--num-gpus', type=int, default=os.environ['SM_NUM_GPUS'])
 
+    # S3 paramenters 
+    parser.add_argument('--bucket_name', type=str, required=True, help='Name of the S3 bucket to store data')
+    parser.add_argument('--prefix', type=str, required=True, help='Prefix (folder path) within the S3 bucket')
+    
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,24 +196,55 @@ if __name__ == '__main__':
 
     torch.manual_seed(args.seed)
 
-    # Load the training data.
+    # Load both training and test data
     train_loader = _get_train_data_loader(args.batch_size, args.data_dir)
+    test_loader = _get_test_data_loader(args.batch_size, args.data_dir)
 
-    # Build the model.
+    # Build and train model
     model = LSTMClassifier(args.embedding_dim, args.hidden_dim, args.vocab_size).to(device)
-
+    
     with open(os.path.join(args.data_dir, "word_dict.pkl"), "rb") as f:
         model.word_dict = pickle.load(f)
 
-    print("Model loaded with embedding_dim {}, hidden_dim {}, vocab_size {}.".format(
-        args.embedding_dim, args.hidden_dim, args.vocab_size
-    ))
-
-    # Train the model.
     optimizer = optim.Adam(model.parameters())
     loss_fn = torch.nn.BCELoss()
 
-    train(model, train_loader, args.epochs, optimizer, loss_fn, device)
+    # Train and get training metrics
+    training_metrics = train(model, train_loader, args.epochs, optimizer, loss_fn, device)
+    
+    # Evaluate on test set
+    test_metrics = evaluate(model, test_loader, device, loss_fn)
+    
+    # Save all metrics to report.csv
+    all_metrics = []
+    for epoch_metrics in training_metrics:
+        metrics_row = {
+            'epoch': epoch_metrics['epoch'],
+            'split': 'train',
+            'loss': epoch_metrics['train_loss'],
+            'accuracy': epoch_metrics['train_accuracy'],
+            'precision': epoch_metrics['train_precision'],
+            'recall': epoch_metrics['train_recall'],
+            'f1': epoch_metrics['train_f1']
+        }
+        all_metrics.append(metrics_row)
+    
+    # Add test metrics
+    test_metrics_row = {
+        'epoch': 'final',
+        'split': 'test',
+        'loss': test_metrics['test_loss'],
+        'accuracy': test_metrics['test_accuracy'],
+        'precision': test_metrics['test_precision'],
+        'recall': test_metrics['test_recall'],
+        'f1': test_metrics['test_f1']
+    }
+    all_metrics.append(test_metrics_row)
+    
+    # Save metrics to CSV
+    metrics_df = pd.DataFrame(all_metrics)
+    metrics_df.to_csv(f's3://{args.bucket_name}/{args.prefix}/reports.csv', index=False)
+    
 
     # Save the parameters used to construct the model
     model_info_path = os.path.join(args.model_dir, 'model_info.pth')
