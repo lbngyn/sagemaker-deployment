@@ -1,0 +1,97 @@
+name: SageMaker Sentiment Analysis CI/CD - Production
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  
+
+  deploy-model:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install boto3 sagemaker pandas
+        
+    - name: Download training artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: training-artifacts
+        path: ./training_output
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Terminate existing endpoint
+      if: github.event.inputs.terminate_endpoint == 'true'
+      run: |
+        python -c "import boto3; client=boto3.client('sagemaker'); \
+        try: client.delete_endpoint(EndpointName='${{ secrets.ENDPOINT_NAME }}'); print('Endpoint deleted') \
+        except Exception as e: print(f'No endpoint to delete or error: {e}')"
+      
+    - name: Deploy model to production
+      run: |
+        python deploy.py \
+          --role ${{ secrets.SAGEMAKER_ROLE }} \
+          --model-data "${{ needs.train-model.outputs.model_data }}" \
+          --endpoint-name "sentiment-analysis-prod-${{ github.run_id }}" \
+          --instance-type ml.t3.medium \
+          --instance-count 1 \
+          --output-path ./deployment_output
+      
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-artifacts
+        path: ./deployment_output
+        retention-days: 7
+        
+    - name: Update endpoint in secrets
+      run: |
+        ENDPOINT_NAME=$(jq -r '.endpoint_name' ./deployment_output/endpoint_info.json)
+        echo "New production endpoint deployed: $ENDPOINT_NAME"
+        # Here you would update your repository secrets with the new endpoint name
+        # This requires additional setup with GitHub API or manual update
+
+  update-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-model
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Download deployment artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: deployment-artifacts
+        path: ./deployment_output
+        
+    - name: Update frontend endpoint URL
+      run: |
+        ENDPOINT_NAME=$(jq -r '.endpoint_name' ./deployment_output/endpoint_info.json)
+        REGION="${{ secrets.AWS_REGION }}"
+        API_URL="https://${ENDPOINT_NAME}.execute-api.${REGION}.amazonaws.com/prod/predict"
+        # Update the index.html file with the new API URL
+        sed -i "s|**REPLACE WITH PUBLIC API URL**|${API_URL}|g" website/index.html
+        
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: website
+        branch: gh-pages
