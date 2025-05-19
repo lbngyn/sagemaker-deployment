@@ -3,7 +3,6 @@ import json
 import os
 import pickle
 import sys
-import sagemaker_containers
 import pandas as pd
 import numpy as np
 import torch
@@ -65,28 +64,21 @@ def predict_fn(input_data, model):
     if model.word_dict is None:
         raise Exception('Model has not been loaded properly, no word_dict.')
     
-    # TODO: Process input_data so that it is ready to be sent to our model.
-    #       You should produce two variables:
-    #         data_X   - A sequence of length 500 which represents the converted review
-    #         data_len - The length of the review
+    # Step 1: Preprocess the input
+    cleaned_review = review_to_words(input_data)
+    data_X, data_len = convert_and_pad(model.word_dict, cleaned_review)
 
-    data_X = None
-    data_len = None
+    # Step 2: Combine length and padded review into a single array
+    data_pack = np.hstack(([data_len], data_X)).reshape(1, -1)
+    data = torch.from_numpy(data_pack).long().to(device)
 
-    # Using data_X and data_len we construct an appropriate input tensor. Remember
-    # that our model expects input data of the form 'len, review[500]'.
-    data_pack = np.hstack((data_len, data_X))
-    data_pack = data_pack.reshape(1, -1)
-    
-    data = torch.from_numpy(data_pack)
-    data = data.to(device)
-
-    # Make sure to put the model into evaluation mode
+    # Step 3: Put model in evaluation mode and get prediction
     model.eval()
+    with torch.no_grad():
+        output = model(data)
 
-    # TODO: Compute the result of applying the model to the input data. The variable `result` should
-    #       be a numpy array which contains a single integer which is either 1 or 0
-
-    result = None
+    # Step 4: Convert model output (logits) to prediction (0 or 1)
+    result = torch.round(output.squeeze()).item()
+    result = int(result)
 
     return result
