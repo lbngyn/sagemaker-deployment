@@ -184,8 +184,8 @@ if __name__ == '__main__':
     parser.add_argument('--data-dir', type=str, default=os.environ.get('SM_CHANNEL_TRAINING', '/opt/ml/input/data/training'))
 
     # S3 paramenters 
-    parser.add_argument('--bucket_name', type=str, required=True, help='Name of the S3 bucket to store data')
-    parser.add_argument('--prefix', type=str, required=True, help='Prefix (folder path) within the S3 bucket')
+    parser.add_argument('--bucket_name', type=str, default='my_bucket', help='Name of the S3 bucket to store data')
+    parser.add_argument('--prefix', type=str, default='prefix', help='Prefix (folder path) within the S3 bucket')
     
     args = parser.parse_args()
 
