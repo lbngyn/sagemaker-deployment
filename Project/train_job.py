@@ -117,7 +117,9 @@ def main():
             f"## Training Job Performance Report\n\n"
             f"{report.to_markdown(index=False)}\n\n"
             )
-    print(message)
+    # Write metrics to file
+    with open('details.txt', 'w') as outfile:
+        outfile.write(message)
 
 if __name__ == "__main__":
     main()
