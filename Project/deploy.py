@@ -3,15 +3,23 @@ import json
 import argparse
 import boto3
 import sagemaker
+import pandas as pd
+from io import StringIO
 from sagemaker.pytorch import PyTorchModel
 from sagemaker.predictor import Predictor
 from sagemaker.serializers import StringSerializer
-
 
 from dotenv import load_dotenv
 
 load_dotenv()
 IAM_ROLE_NAME = os.environ['IAM_ROLE_NAME']
+
+REGION = os.environ['AWS_REGION']
+session = sagemaker.Session(boto_session=boto3.session.Session(region_name=REGION))
+BUCKET_NAME = session.default_bucket()
+PREFIX = os.environ['PREFIX']
+ACCOUNT_ID = session.boto_session.client(
+    'sts').get_caller_identity()['Account']
 
 class StringPredictor(Predictor):
     def __init__(self, endpoint_name, sagemaker_session):
@@ -30,21 +38,36 @@ def parse_args():
                         help="Number of instances to deploy")
     return parser.parse_args()
 
+def get_latest_model_data_from_s3(bucket, key):
+    s3 = boto3.client('s3')
+    try:
+        obj = s3.get_object(Bucket=bucket, Key=key)
+        data = obj['Body'].read().decode('utf-8')
+        df = pd.read_csv(StringIO(data))
+        latest_record = df.iloc[-1]  # Lấy dòng cuối cùng
+        model_data_url = latest_record['model_data']  # Giả sử cột tên model_data
+        print(f"Latest model_data from CSV: {model_data_url}")
+        return model_data_url
+    except Exception as e:
+        print(f"Error loading model_data.csv from S3: {e}")
+        raise
+
 def main():
     args = parse_args()
 
-    # Get model_data path in s3
-    with open('model_data.txt') as f:
-        model_data = f.read()
-    
+    # Load model_data path from S3 model_data.csv (lấy phần tử cuối cùng)
+    model_data_key = f"{PREFIX}/model_data.csv"  # đường dẫn file trên S3
+    model_data = get_latest_model_data_from_s3(BUCKET_NAME, model_data_key)
+
     # Create a PyTorch model
     model = PyTorchModel(
         model_data=model_data,
-        role= IAM_ROLE_NAME,
-        framework_version="1.13.1",
-        py_version="py39",
-        entry_point='predict.py',
-        source_dir='serve',
+        role=IAM_ROLE_NAME,
+        # framework_version="1.13.1",
+        # py_version="py39",
+        # entry_point='predict.py',
+        # source_dir='serve',
+        image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
         predictor_cls=StringPredictor
     )
     
