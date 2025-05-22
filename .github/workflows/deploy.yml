@@ -34,9 +34,18 @@ jobs:
       - name: Terminate existing endpoint
         continue-on-error: true
         run: |
-          python -c "import boto3; client=boto3.client('sagemaker'); \
-          try: client.delete_endpoint(EndpointName='${{ secrets.ENDPOINT_NAME }}'); print('Endpoint deleted') \
-          except Exception as e: print(f'No endpoint to delete or error: {e}')"
+          python - <<EOF
+          import boto3
+
+          client = boto3.client('sagemaker')
+          endpoint_name = '${{ secrets.ENDPOINT_NAME }}'
+
+          try:
+              client.delete_endpoint(EndpointName=endpoint_name)
+              print(f'Endpoint {endpoint_name} deleted')
+          except Exception as e:
+              print(f'No endpoint to delete or error: {e}')
+          EOF
 
       - name: Deploy model to SageMaker
         env:
