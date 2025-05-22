@@ -7,8 +7,10 @@ requests
 boto3 
 tabulate
 pandas
-numpy
 nltk
 s3fs
 beautifulsoup4
 html5lib
+
+
+

@@ -2,13 +2,13 @@ FROM python:3.9-slim
 
 RUN pip install --no-cache-dir torch==2.0.1+cpu \
     -f https://download.pytorch.org/whl/torch_stable.html
-    
-COPY Project/serve/requirements.txt /tmp/serve.txt
+
+    RUN pip install --no-cache-dir numpy==1.24.4
+
 COPY Project/train/requirements.txt /tmp/train.txt
 
 RUN pip install --no-cache-dir -r /tmp/train.txt \
- && pip install --no-cache-dir -r /tmp/serve.txt \
- && rm -rf /root/.cache /tmp/*
+    && rm -rf /root/.cache /tmp/*
 
 # Copy training and serving scripts
 COPY Project/train/train.py /usr/bin/train
