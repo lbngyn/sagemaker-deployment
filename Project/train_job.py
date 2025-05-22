@@ -1,5 +1,6 @@
 import os
 
+
 import pandas as pd
 import sagemaker
 import argparse
@@ -69,8 +70,9 @@ def main():
     # print(data['train_X_len'])
     # print(data['test_X_len'])
     # # Upload data to S3
-    data_dir = './data/processed'
-    input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
+    # data_dir = './data/processed'
+    # input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
+    input_data = f's3://{BUCKET_NAME}/{PREFIX}'
     
     # Create and run PyTorch estimator
     estimator = PyTorch(
@@ -115,7 +117,9 @@ def main():
             f"## Training Job Performance Report\n\n"
             f"{report.to_markdown(index=False)}\n\n"
             )
-    print(message)
+    # Write metrics to file
+    with open('details.txt', 'w') as outfile:
+        outfile.write(message)
 
 if __name__ == "__main__":
     main()
