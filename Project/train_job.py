@@ -8,6 +8,7 @@ import argparse
 import json
 import boto3
 from sagemaker.pytorch import PyTorch
+from sagemaker.estimator import Estimator
 from prepare_data import IMDbDataPreparation
 from dotenv import load_dotenv
 
@@ -90,27 +91,26 @@ def main():
     # input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
     input_data = f's3://{BUCKET_NAME}/{PREFIX}'
     
-    # Create and run PyTorch estimator
-    estimator = PyTorch(
-        # entry_point="train.py",
-        # source_dir="train",
-        entry_point="/usr/bin/train",
-        image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
-        role=IAM_ROLE_NAME,
-        framework_version="1.13.1",
-        py_version="py39",
-        instance_count=args.instance_count,
-        instance_type=args.training_instance_type,
-        output_path= 's3://{}/{}/model/'.format(BUCKET_NAME, PREFIX), 
-        hyperparameters={
-            "epochs": args.epochs,
-            "hidden_dim": args.hidden_dim,
-            "embedding_dim": args.embedding_dim,
-            "vocab_size": args.vocab_size,
-            "bucket_name": BUCKET_NAME, 
-            "prefix": PREFIX
-        }
-    )
+    estimator = Estimator(
+    image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
+    role=IAM_ROLE_NAME,
+    instance_count=args.instance_count,
+    instance_type=args.training_instance_type,
+    output_path='s3://{}/{}/model/'.format(BUCKET_NAME, PREFIX),
+    code_location='s3://{}/{}/source/'.format(BUCKET_NAME, PREFIX),  # Nếu cần
+    base_job_name='my-training-job',  # Tên job
+    hyperparameters={
+        "epochs": args.epochs,
+        "hidden_dim": args.hidden_dim,
+        "embedding_dim": args.embedding_dim,
+        "vocab_size": args.vocab_size,
+    },
+    environment={
+        "BUCKET_NAME": BUCKET_NAME,
+        "PREFIX": PREFIX,
+        "REGION": REGION,
+    },
+)
     
     print("Starting model training...")
     start_time = time.time()
