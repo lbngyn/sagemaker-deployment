@@ -46,10 +46,10 @@ jobs:
           python train_job.py
           cat details.txt >> report.md
 
-        - name: Comment report to PR
-          if: github.event_name == 'pull_request'
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            cd Project
-            cml-send-comment report.md
+      - name: Comment report to PR
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd Project
+          cml-send-comment report.md
