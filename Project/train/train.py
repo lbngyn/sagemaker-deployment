@@ -180,11 +180,8 @@ if __name__ == '__main__':
                         help='size of the vocabulary (default: 5000)')
 
     # SageMaker Parameters
-    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
-    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
-    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
-    parser.add_argument('--data-dir', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
-    parser.add_argument('--num-gpus', type=int, default=os.environ['SM_NUM_GPUS'])
+    parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR', '/opt/ml/model'))
+    parser.add_argument('--data-dir', type=str, default=os.environ.get('SM_CHANNEL_TRAINING', '/opt/ml/input/data/training'))
 
     # S3 paramenters 
     parser.add_argument('--bucket_name', type=str, required=True, help='Name of the S3 bucket to store data')
