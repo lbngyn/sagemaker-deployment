@@ -65,7 +65,7 @@ def main():
         role=IAM_ROLE_NAME,
         # framework_version="1.13.1",
         # py_version="py39",
-        # entry_point='predict.py',
+        entry_point='/usr/bin/serve',
         # source_dir='serve',
         image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
         predictor_cls=StringPredictor

@@ -94,6 +94,7 @@ def main():
     estimator = PyTorch(
         # entry_point="train.py",
         # source_dir="train",
+        entry_point="/usr/bin/train",
         image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
         role=IAM_ROLE_NAME,
         framework_version="1.13.1",
@@ -101,7 +102,6 @@ def main():
         instance_count=args.instance_count,
         instance_type=args.training_instance_type,
         output_path= 's3://{}/{}/model/'.format(BUCKET_NAME, PREFIX), 
-        requirements_file="requirements.txt",  # 👈 ADD THIS LINE
         hyperparameters={
             "epochs": args.epochs,
             "hidden_dim": args.hidden_dim,
