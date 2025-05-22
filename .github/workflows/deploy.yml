@@ -54,6 +54,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
           IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         run: |
+          cd Project
           python deploy.py
 
       - name: Save endpoint name
