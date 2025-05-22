@@ -1,8 +1,8 @@
 name: SageMaker Sentiment Analysis CI/CD - Production
 
 on:
-  push:
-    branches: [master]
+  # push:
+  #   branches: [master]
   pull_request:
     branches: [master]
 
@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install boto3 sagemaker pandas
 
       - name: Download training artifacts
@@ -38,65 +38,32 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terminate existing endpoint
-        if: github.event.inputs.terminate_endpoint == 'true'
+        continue-on-error: true
         run: |
           python -c "import boto3; client=boto3.client('sagemaker'); \
           try: client.delete_endpoint(EndpointName='${{ secrets.ENDPOINT_NAME }}'); print('Endpoint deleted') \
           except Exception as e: print(f'No endpoint to delete or error: {e}')"
 
-      - name: Deploy model to production
+      - name: Deploy model to SageMaker
         env:
           PREFIX: ${{ secrets.PREFIX }}
           GITHUB_SHA: ${{ github.sha }}
-          AWS_DEFAULT_REGION: ap-southeast-1
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
           IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         run: |
-          python deploy.py \
-            --role ${{ secrets.SAGEMAKER_ROLE }} \
-            --model-data "${{ needs.train-model.outputs.model_data }}" \
-            --endpoint-name "sentiment-analysis-prod-${{ github.run_id }}" \
-            --instance-type ml.t3.medium \
-            --instance-count 1 \
-            --output-path ./deployment_output
+          python deploy.py
 
-      - name: Upload deployment artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-artifacts
-          path: ./deployment_output
-          retention-days: 7
-
-      - name: Update endpoint in secrets
+      - name: Save endpoint name
         run: |
-          ENDPOINT_NAME=$(jq -r '.endpoint_name' ./deployment_output/endpoint_info.json)
-          echo "New production endpoint deployed: $ENDPOINT_NAME"
-          # Here you would update your repository secrets with the new endpoint name
-          # This requires additional setup with GitHub API or manual update
+          echo "::set-output name=endpoint_name::$(cat deployment_output/endpoint_info.json | jq -r '.endpoint_name')"
+        id: save-endpoint
 
-  update-frontend:
-    runs-on: ubuntu-latest
-    needs: deploy-model
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Download deployment artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: deployment-artifacts
-          path: ./deployment_output
-
-      - name: Update frontend endpoint URL
+      - name: Deploy API Gateway + Lambda via CloudFormation
+        env:
+          ENDPOINT_NAME: ${{ steps.save-endpoint.outputs.endpoint_name }}
         run: |
-          ENDPOINT_NAME=$(jq -r '.endpoint_name' ./deployment_output/endpoint_info.json)
-          REGION="${{ secrets.AWS_REGION }}"
-          API_URL="https://${ENDPOINT_NAME}.execute-api.${REGION}.amazonaws.com/prod/predict"
-          # Update the index.html file with the new API URL
-          sed -i "s|**REPLACE WITH PUBLIC API URL**|${API_URL}|g" website/index.html
-
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: website
-          branch: gh-pages
+          aws cloudformation deploy \
+            --template-file infrastructure/cf-api.yaml \
+            --stack-name sentiment-api-stack \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides EndpointName=${ENDPOINT_NAME}

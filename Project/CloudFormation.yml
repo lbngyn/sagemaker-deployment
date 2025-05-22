@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: API Gateway + Lambda for SageMaker endpoint
+
+Parameters:
+  EndpointName:
+    Type: String
+    Description: SageMaker Endpoint Name
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeSageMaker
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sagemaker:InvokeEndpoint
+                  - logs:*
+                Resource: "*"
+
+  InferenceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Timeout: 15
+      MemorySize: 512
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          ENDPOINT_NAME: !Ref EndpointName
+      Code:
+        ZipFile: |
+          import boto3, os, json
+          client = boto3.client('sagemaker-runtime')
+          def lambda_handler(event, context):
+              try:
+                  data = json.loads(event['body'])
+                  response = client.invoke_endpoint(
+                      EndpointName=os.environ["ENDPOINT_NAME"],
+                      ContentType="text/plain",
+                      Body=data.get("text", "")
+                  )
+                  result = response['Body'].read().decode()
+                  return {
+                      "statusCode": 200,
+                      "body": json.dumps({"prediction": result})
+                  }
+              except Exception as e:
+                  return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: InferenceAPI
+      ProtocolType: HTTP
+
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${InferenceFunction.Arn}/invocations
+      PayloadFormatVersion: "2.0"
+
+  Route:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: "POST /predict"
+      Target: !Sub integrations/${Integration}
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn: Route
+    Properties:
+      ApiId: !Ref HttpApi
+
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      DeploymentId: !Ref Deployment
+      StageName: prod
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref InferenceFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/*/predict
+
+Outputs:
+  ApiUrl:
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/predict
+    Export:
+      Name: PublicApiUrl
