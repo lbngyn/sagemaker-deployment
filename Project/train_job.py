@@ -67,8 +67,8 @@ def download_file_from_s3(bucket, key, local_path):
         s3_client.download_file(bucket, key, local_path)
         print(f"Downloaded s3://{bucket}/{key} to {local_path}")
         return True
-    except s3_client.exceptions.NoSuchKey:
-        print(f"File s3://{bucket}/{key} not found, will create a new one.")
+    except Exception as e:
+        print(e)
         return False
 
 def upload_file_to_s3(local_path, bucket, key):
