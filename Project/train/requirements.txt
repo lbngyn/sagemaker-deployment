@@ -1,3 +1,13 @@
+torch
+torchvision
+scikit-learn
+awscli
+fsspec 
+joblib
+flask 
+requests 
+boto3 
+tabulate
 pandas
 numpy
 nltk

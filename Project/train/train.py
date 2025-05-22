@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import json
 import os
@@ -179,16 +180,17 @@ if __name__ == '__main__':
                         help='size of the vocabulary (default: 5000)')
 
     # SageMaker Parameters
-    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
-    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
-    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
-    parser.add_argument('--data-dir', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
-    parser.add_argument('--num-gpus', type=int, default=os.environ['SM_NUM_GPUS'])
+    parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR', '/opt/ml/model'))
+    parser.add_argument('--data-dir', type=str, default=os.environ.get('SM_CHANNEL_TRAINING', '/opt/ml/input/data/training'))
 
     # S3 paramenters 
-    parser.add_argument('--bucket_name', type=str, required=True, help='Name of the S3 bucket to store data')
-    parser.add_argument('--prefix', type=str, required=True, help='Prefix (folder path) within the S3 bucket')
-    
+    # parser.add_argument('--bucket_name', type=str, required=True, help='Name of the S3 bucket to store data')
+    # parser.add_argument('--prefix', type=str, required=True, help='Prefix (folder path) within the S3 bucket')
+    import os
+    bucket_name = os.environ.get("BUCKET_NAME")
+    prefix = os.environ.get("PREFIX")
+    region = os.environ.get("REGION")
+
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -243,7 +245,7 @@ if __name__ == '__main__':
     
     # Save metrics to CSV
     metrics_df = pd.DataFrame(all_metrics)
-    metrics_df.to_csv(f's3://{args.bucket_name}/{args.prefix}/reports.csv', index=False)
+    metrics_df.to_csv(f's3://{bucket_name}/{prefix}/reports.csv', index=False)
     
 
     # Save the parameters used to construct the model

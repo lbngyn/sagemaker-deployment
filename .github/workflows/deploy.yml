@@ -3,6 +3,8 @@ name: SageMaker Sentiment Analysis CI/CD - Production
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
   deploy-model:
@@ -43,6 +45,11 @@ jobs:
           except Exception as e: print(f'No endpoint to delete or error: {e}')"
 
       - name: Deploy model to production
+        env:
+          PREFIX: ${{ secrets.PREFIX }}
+          GITHUB_SHA: ${{ github.sha }}
+          AWS_DEFAULT_REGION: ap-southeast-1
+          IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
         run: |
           python deploy.py \
             --role ${{ secrets.SAGEMAKER_ROLE }} \
