@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import json
 import os
@@ -82,3 +83,22 @@ def predict_fn(input_data, model):
     result = int(result)
 
     return result
+
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+model = model_fn('/opt/ml/model')  # SageMaker mount model ở đây
+
+@app.route('/ping', methods=['GET'])
+def ping():
+    return 'pong', 200
+
+@app.route('/invocations', methods=['POST'])
+def invoke():
+    input_data = input_fn(request.data, 'text/plain')
+    result = predict_fn(input_data, model)
+    return output_fn(result, 'application/json')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
+    
