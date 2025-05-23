@@ -108,6 +108,7 @@ def main():
         }
         
         print(f"Model deployed successfully")
+        print(endpoint_info)
         print(json.dumps(endpoint_info, indent=2))
         
         # Test the endpoint with a sample review

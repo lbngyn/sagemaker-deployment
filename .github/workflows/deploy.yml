@@ -58,9 +58,9 @@ jobs:
           python deploy.py
 
       - name: Save endpoint name
-        run: |
-          echo "::set-output name=endpoint_name::$(cat deployment_output/endpoint_info.json | jq -r '.endpoint_name')"
         id: save-endpoint
+        run: |
+          echo "endpoint_name=$(jq -r '.endpoint_name' deployment_output/endpoint_info.json)" >> "$GITHUB_OUTPUT"
 
       - name: Deploy API Gateway + Lambda via CloudFormation
         env:
