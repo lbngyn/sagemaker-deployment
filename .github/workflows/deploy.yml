@@ -67,7 +67,7 @@ jobs:
           ENDPOINT_NAME: ${{ steps.save-endpoint.outputs.endpoint_name }}
         run: |
           aws cloudformation deploy \
-            --template-file infrastructure/cf-api.yaml \
+            --template-file Project/CloudFormation.yml \
             --stack-name sentiment-api-stack \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides EndpointName=${ENDPOINT_NAME}
