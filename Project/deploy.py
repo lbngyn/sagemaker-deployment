@@ -111,6 +111,10 @@ def main():
         print(endpoint_info)
         print(json.dumps(endpoint_info, indent=2))
         
+        os.makedirs("deployment_output", exist_ok=True)
+        with open("deployment_output/endpoint_info.json", "w") as f:
+            json.dump(endpoint_info, f, indent=2)
+
         # Test the endpoint with a sample review
         test_review = 'The simplest pleasures in life are the best, and this film is one of them.'
         print(f"Testing endpoint with sample review: '{test_review}'")

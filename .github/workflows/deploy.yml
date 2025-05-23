@@ -60,7 +60,7 @@ jobs:
       - name: Save endpoint name
         id: save-endpoint
         run: |
-          echo "endpoint_name=$(jq -r '.endpoint_name' deployment_output/endpoint_info.json)" >> "$GITHUB_OUTPUT"
+          echo "endpoint_name=$(jq -r '.endpoint_name' Project/deployment_output/endpoint_info.json)" >> "$GITHUB_OUTPUT"
 
       - name: Deploy API Gateway + Lambda via CloudFormation
         env:
