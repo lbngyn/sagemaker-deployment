@@ -66,7 +66,7 @@ def get_latest_training_job_name_from_s3(bucket, key):
 def create_valid_endpoint_name(training_job_name):
     """Create valid endpoint name from training job name."""
     # SageMaker endpoint names must be 1-63 characters, alphanumeric and hyphens only
-    endpoint_name = f"{training_job_name}-endpoint2"
+    endpoint_name = f"{training_job_name}-endpoint"
     
     # Remove invalid characters and truncate if necessary
     import re
