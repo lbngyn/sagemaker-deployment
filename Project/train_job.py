@@ -77,100 +77,103 @@ def upload_file_to_s3(local_path, bucket, key):
     print(f"Uploaded {local_path} to s3://{bucket}/{key}")
 
 def main():
+    print("Hello")
+
     args = parse_args()
     
-    # Set data paths
-    base_dir = './data'
+    # # Set data paths
+    # base_dir = './data'
 
     # data_prep = IMDbDataPreparation(base_dir=base_dir)
     # data, data_dir = data_prep.prepare_data()
     # print(data['train_X_len'])
     # print(data['test_X_len'])
-    # # Upload data to S3
-    # data_dir = './data/processed'
-    # input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
-    input_data = f's3://{BUCKET_NAME}/{PREFIX}'
+    # Upload data to S3
+    data_dir = './data/processed'
+    input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
+    print(input_data)
+#     input_data = f's3://{BUCKET_NAME}/{PREFIX}'
     
-    estimator = Estimator(
-    image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
-    role=IAM_ROLE_NAME,
-    instance_count=args.instance_count,
-    instance_type=args.training_instance_type,
-    output_path='s3://{}/{}/model/'.format(BUCKET_NAME, PREFIX),
-    code_location='s3://{}/{}/source/'.format(BUCKET_NAME, PREFIX),  # Nếu cần
-    base_job_name='my-training-job',  # Tên job
-    hyperparameters={
-        "epochs": args.epochs,
-        "hidden_dim": args.hidden_dim,
-        "embedding_dim": args.embedding_dim,
-        "vocab_size": args.vocab_size,
-    },
-    environment={
-        "BUCKET_NAME": BUCKET_NAME,
-        "PREFIX": PREFIX,
-        "REGION": REGION,
-    },
-)
+#     estimator = Estimator(
+#         image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
+#         role=IAM_ROLE_NAME,
+#         instance_count=args.instance_count,
+#         instance_type=args.training_instance_type,
+#         output_path='s3://{}/{}/model/'.format(BUCKET_NAME, PREFIX),
+#         code_location='s3://{}/{}/source/'.format(BUCKET_NAME, PREFIX),  # Nếu cần
+#         base_job_name='my-training-job',  # Tên job
+#         hyperparameters={
+#             "epochs": args.epochs,
+#             "hidden_dim": args.hidden_dim,
+#             "embedding_dim": args.embedding_dim,
+#             "vocab_size": args.vocab_size,
+#         },
+#         environment={
+#             "BUCKET_NAME": BUCKET_NAME,
+#             "PREFIX": PREFIX,
+#             "REGION": REGION,
+#         },
+#     )   
     
-    print("Starting model training...")
-    start_time = time.time()
-    estimator.fit({'training': input_data})
-    training_time = time.time() - start_time
+#     print("Starting model training...")
+#     start_time = time.time()
+#     estimator.fit({'training': input_data})
+#     training_time = time.time() - start_time
 
-    model_data = estimator.model_data  # S3 URI của model artifact
+#     model_data = estimator.model_data  # S3 URI của model artifact
 
-    training_job_name = estimator.latest_training_job.name
-    hyperparameters_dictionary = estimator.hyperparameters()
-    print("Training_job_name:", training_job_name)
-    print("hyperparameters_dictionary:", hyperparameters_dictionary)
+#     training_job_name = estimator.latest_training_job.name
+#     hyperparameters_dictionary = estimator.hyperparameters()
+#     print("Training_job_name:", training_job_name)
+#     print("hyperparameters_dictionary:", hyperparameters_dictionary)
 
-    # Đọc báo cáo accuracy từ file s3 (bạn có thể thay bằng cách khác nếu bạn lưu accuracy ở nơi khác)
-    report = pd.read_csv(f's3://{BUCKET_NAME}/{PREFIX}/reports.csv')
-    accuracy = None
-    if 'accuracy' in report.columns:
-        accuracy = report['accuracy'].iloc[-1]  # lấy accuracy dòng cuối cùng hoặc tùy bạn logic
+#     # Đọc báo cáo accuracy từ file s3 (bạn có thể thay bằng cách khác nếu bạn lưu accuracy ở nơi khác)
+#     report = pd.read_csv(f's3://{BUCKET_NAME}/{PREFIX}/reports.csv')
+#     accuracy = None
+#     if 'accuracy' in report.columns:
+#         accuracy = report['accuracy'].iloc[-1]  # lấy accuracy dòng cuối cùng hoặc tùy bạn logic
 
-    # File model_data.csv trên s3
-    s3_model_data_key = f"{PREFIX}/model_data.csv"
-    local_model_data_csv = tempfile.mktemp(suffix=".csv")
+#     # File model_data.csv trên s3
+#     s3_model_data_key = f"{PREFIX}/model_data.csv"
+#     local_model_data_csv = tempfile.mktemp(suffix=".csv")
 
-    # Tải model_data.csv nếu có
-    file_exists = download_file_from_s3(BUCKET_NAME, s3_model_data_key, local_model_data_csv)
+#     # Tải model_data.csv nếu có
+#     file_exists = download_file_from_s3(BUCKET_NAME, s3_model_data_key, local_model_data_csv)
 
-    if file_exists:
-        df = pd.read_csv(local_model_data_csv)
-    else:
-        df = pd.DataFrame(columns=['timestamp', 'training_job_name', 'model_data_s3_uri', 'training_time_sec', 'accuracy'])
+#     if file_exists:
+#         df = pd.read_csv(local_model_data_csv)
+#     else:
+#         df = pd.DataFrame(columns=['timestamp', 'training_job_name', 'model_data_s3_uri', 'training_time_sec', 'accuracy'])
 
-    # Thêm record mới
-    new_record = {
-        'timestamp': pd.Timestamp.now().isoformat(),
-        'training_job_name': training_job_name,
-        'model_data_s3_uri': model_data,
-        'training_time_sec': training_time,
-        'accuracy': accuracy
-    }
-    df = pd.concat([df, pd.DataFrame([new_record])], ignore_index=True)
+#     # Thêm record mới
+#     new_record = {
+#         'timestamp': pd.Timestamp.now().isoformat(),
+#         'training_job_name': training_job_name,
+#         'model_data_s3_uri': model_data,
+#         'training_time_sec': training_time,
+#         'accuracy': accuracy
+#     }
+#     df = pd.concat([df, pd.DataFrame([new_record])], ignore_index=True)
 
-    # Lưu lại csv local và upload lên s3
-    df.to_csv(local_model_data_csv, index=False)
-    upload_file_to_s3(local_model_data_csv, BUCKET_NAME, s3_model_data_key)
+#     # Lưu lại csv local và upload lên s3
+#     df.to_csv(local_model_data_csv, index=False)
+#     upload_file_to_s3(local_model_data_csv, BUCKET_NAME, s3_model_data_key)
 
-    message = (f"## Training Job Submission Report\n\n"
-            f"Training Job name: '{training_job_name}'\n\n"
-                "Model Artifacts Location:\n\n"
-            f"'s3://{BUCKET_NAME}/{PREFIX}/output/{training_job_name}/output/model.tar.gz'\n\n"
-            f"Model hyperparameters: {hyperparameters_dictionary}\n\n"
-                "See the Logs in a few minute at: "
-            f"[CloudWatch](https://{REGION}.console.aws.amazon.com/cloudwatch/home?region={REGION}#logStream:group=/aws/sagemaker/TrainingJobs;prefix={training_job_name})\n\n"
-                "If you merge this pull request the resulting endpoint will be avaible this URL:\n\n"
-            f"'https://runtime.sagemaker.{REGION}.amazonaws.com/endpoints/{training_job_name}/invocations'\n\n"
-            f"## Training Job Performance Report\n\n"
-            f"{report.to_markdown(index=False)}\n\n"
-            )
-    # Write metrics to file
-    with open('details.txt', 'w') as outfile:
-        outfile.write(message)
+#     message = (f"## Training Job Submission Report\n\n"
+#             f"Training Job name: '{training_job_name}'\n\n"
+#                 "Model Artifacts Location:\n\n"
+#             f"'s3://{BUCKET_NAME}/{PREFIX}/output/{training_job_name}/output/model.tar.gz'\n\n"
+#             f"Model hyperparameters: {hyperparameters_dictionary}\n\n"
+#                 "See the Logs in a few minute at: "
+#             f"[CloudWatch](https://{REGION}.console.aws.amazon.com/cloudwatch/home?region={REGION}#logStream:group=/aws/sagemaker/TrainingJobs;prefix={training_job_name})\n\n"
+#                 "If you merge this pull request the resulting endpoint will be avaible this URL:\n\n"
+#             f"'https://runtime.sagemaker.{REGION}.amazonaws.com/endpoints/{training_job_name}/invocations'\n\n"
+#             f"## Training Job Performance Report\n\n"
+#             f"{report.to_markdown(index=False)}\n\n"
+#             )
+#     # Write metrics to file
+#     with open('details.txt', 'w') as outfile:
+#         outfile.write(message)
 
 if __name__ == "__main__":
     main()
