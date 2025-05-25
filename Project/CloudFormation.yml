@@ -104,9 +104,19 @@ Resources:
       RouteKey: "POST /predict"
       Target: !Sub integrations/${Integration}
 
+  RouteOptions:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: "OPTIONS /predict"
+      Target: !Sub integrations/${Integration}
+
+
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
-    DependsOn: Route
+    DependsOn:
+      - Route
+      - RouteOptions
     Properties:
       ApiId: !Ref HttpApi
 
