@@ -36,6 +36,9 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=lbngyn_sagemaker-deployment
+            -Dsonar.organization=lbngyn
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
