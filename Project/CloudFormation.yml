@@ -41,23 +41,47 @@ Resources:
           ENDPOINT_NAME: !Ref EndpointName
       Code:
         ZipFile: |
-          import boto3, os, json
+          import boto3
+          import os
+          import json
+
           client = boto3.client('sagemaker-runtime')
+
           def lambda_handler(event, context):
               try:
+                  # Parse input JSON từ frontend
                   data = json.loads(event['body'])
+
+                  # Gửi review đến endpoint SageMaker
                   response = client.invoke_endpoint(
                       EndpointName=os.environ["ENDPOINT_NAME"],
                       ContentType="text/plain",
-                      Body=data.get("text", "")
+                      Body=data.get("review", "")
                   )
+
+                  # Đọc kết quả trả về (ví dụ: "0" hoặc "1")
                   result = response['Body'].read().decode()
+
+                  # Trả về kết quả dưới dạng text/plain để JS có thể parseFloat trực tiếp
                   return {
                       "statusCode": 200,
-                      "body": json.dumps({"prediction": result})
+                      "headers": {
+                          "Content-Type": "text/plain",
+                          "Access-Control-Allow-Origin": "*"
+                      },
+                      "body": result
                   }
+
               except Exception as e:
-                  return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
+                  # Trả về lỗi chuẩn để dễ debug
+                  return {
+                      "statusCode": 500,
+                      "headers": {
+                          "Content-Type": "application/json",
+                          "Access-Control-Allow-Origin": "*"
+                      },
+                      "body": json.dumps({"error": str(e)})
+                  }
 
   HttpApi:
     Type: AWS::ApiGatewayV2::Api
