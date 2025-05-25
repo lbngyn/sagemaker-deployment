@@ -48,21 +48,37 @@ Resources:
           client = boto3.client('sagemaker-runtime')
 
           def lambda_handler(event, context):
-              try:
-                  # Parse input JSON từ frontend
-                  data = json.loads(event['body'])
+              # Xử lý CORS preflight (OPTIONS request)
+              if event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS' or event.get('httpMethod') == 'OPTIONS':
+                  return {
+                      "statusCode": 200,
+                      "headers": {
+                          "Access-Control-Allow-Origin": "*",
+                          "Access-Control-Allow-Methods": "POST,OPTIONS",
+                          "Access-Control-Allow-Headers": "Content-Type"
+                      },
+                      "body": ""
+                  }
 
-                  # Gửi review đến endpoint SageMaker
+              try:
+                  # Lấy body từ sự kiện, parse JSON
+                  body = event.get('body', '{}')
+                  if isinstance(body, str):
+                      data = json.loads(body)
+                  else:
+                      data = body
+
+                  # Gửi dữ liệu đến SageMaker endpoint
                   response = client.invoke_endpoint(
                       EndpointName=os.environ["ENDPOINT_NAME"],
                       ContentType="text/plain",
                       Body=data.get("review", "")
                   )
 
-                  # Đọc kết quả trả về (ví dụ: "0" hoặc "1")
-                  result = response['Body'].read().decode()
+                  # Đọc kết quả trả về từ SageMaker
+                  result = response['Body'].read().decode().strip()
 
-                  # Trả về kết quả dưới dạng text/plain để JS có thể parseFloat trực tiếp
+                  # Trả về kết quả cùng CORS headers
                   return {
                       "statusCode": 200,
                       "headers": {
@@ -73,7 +89,7 @@ Resources:
                   }
 
               except Exception as e:
-                  # Trả về lỗi chuẩn để dễ debug
+                  # Trả lỗi và thông báo cụ thể cho debug
                   return {
                       "statusCode": 500,
                       "headers": {
@@ -82,6 +98,7 @@ Resources:
                       },
                       "body": json.dumps({"error": str(e)})
                   }
+
 
   HttpApi:
     Type: AWS::ApiGatewayV2::Api
