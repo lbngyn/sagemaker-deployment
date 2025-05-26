@@ -1,3 +1,4 @@
+
 import os
 import json
 import argparse
@@ -96,7 +97,7 @@ def main():
             instance_type=args.instance_type,
             endpoint_name=endpoint_name,
             wait=True,
-            enable_network_isolation=False  # <== Rất quan trọng để log hoạt động
+            enable_network_isolation=False
         )
         
         # Save endpoint information

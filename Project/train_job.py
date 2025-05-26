@@ -77,10 +77,12 @@ def upload_file_to_s3(local_path, bucket, key):
     print(f"Uploaded {local_path} to s3://{bucket}/{key}")
 
 def main():
+    print("Hello")
+
     args = parse_args()
     
-    # Set data paths
-    base_dir = './data'
+    # # Set data paths
+    # base_dir = './data'
 
     # data_prep = IMDbDataPreparation(base_dir=base_dir)
     # data, data_dir = data_prep.prepare_data()
@@ -89,28 +91,29 @@ def main():
     # # Upload data to S3
     # data_dir = './data/processed'
     # input_data = upload_data_to_s3(data_dir, BUCKET_NAME, PREFIX)
+    # print(input_data)
     input_data = f's3://{BUCKET_NAME}/{PREFIX}'
     
     estimator = Estimator(
-    image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
-    role=IAM_ROLE_NAME,
-    instance_count=args.instance_count,
-    instance_type=args.training_instance_type,
-    output_path='s3://{}/{}/model/'.format(BUCKET_NAME, PREFIX),
-    code_location='s3://{}/{}/source/'.format(BUCKET_NAME, PREFIX),  # Nếu cần
-    base_job_name='my-training-job',  # Tên job
-    hyperparameters={
-        "epochs": args.epochs,
-        "hidden_dim": args.hidden_dim,
-        "embedding_dim": args.embedding_dim,
-        "vocab_size": args.vocab_size,
-    },
-    environment={
-        "BUCKET_NAME": BUCKET_NAME,
-        "PREFIX": PREFIX,
-        "REGION": REGION,
-    },
-)
+        image_uri=f'{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/my-app:latest',
+        role=IAM_ROLE_NAME,
+        instance_count=args.instance_count,
+        instance_type=args.training_instance_type,
+        output_path='s3://{}/{}/model/'.format(BUCKET_NAME, PREFIX),
+        code_location='s3://{}/{}/source/'.format(BUCKET_NAME, PREFIX),  # Nếu cần
+        base_job_name='my-training-job',  # Tên job
+        hyperparameters={
+            "epochs": args.epochs,
+            "hidden_dim": args.hidden_dim,
+            "embedding_dim": args.embedding_dim,
+            "vocab_size": args.vocab_size,
+        },
+        environment={
+            "BUCKET_NAME": BUCKET_NAME,
+            "PREFIX": PREFIX,
+            "REGION": REGION,
+        },
+    )   
     
     print("Starting model training...")
     start_time = time.time()
