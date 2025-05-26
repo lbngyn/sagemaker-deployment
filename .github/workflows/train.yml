@@ -32,7 +32,7 @@ jobs:
           bandit -r . -f json -o bandit-report.json || true
 
       - name: Upload Bandit Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: bandit-report
           path: bandit-report.json
@@ -42,7 +42,7 @@ jobs:
           trufflehog file://$(pwd) > trufflehog-report.txt || true
 
       - name: Upload TruffleHog report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: trufflehog-report
           path: trufflehog-report.txt
