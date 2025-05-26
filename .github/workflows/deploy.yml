@@ -24,9 +24,9 @@ jobs:
           pip install --upgrade pip
           pip install boto3 sagemaker pandas wget s3fs python-dotenv scikit-learn numpy nltk beautifulsoup4 html5lib tabulate bandit trufflehog
 
-          - name: Run Bandit
-          run: |
-            bandit -r . -f json -o bandit-report.json || true
+      - name: Run Bandit
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
 
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v4
