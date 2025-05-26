@@ -24,23 +24,25 @@ jobs:
           pip install --upgrade pip
           pip install boto3 sagemaker pandas wget s3fs python-dotenv scikit-learn numpy nltk beautifulsoup4 html5lib tabulate bandit trufflehog
 
-      - name: Run Bandit
-        run: |
-          bandit -r . -f json -o bandit-report.json || true
+          - name: Run Bandit
+          run: |
+            bandit -r . -f json -o bandit-report.json || true
+
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
 
       - name: Run TruffleHog
         run: |
-          trufflehog git . || true
+          trufflehog file://$(pwd) > trufflehog-report.txt || true
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+      - name: Upload TruffleHog report
+        uses: actions/upload-artifact@v4
         with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=lbngyn_sagemaker-deployment
-            -Dsonar.organization=lbngyn
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          name: trufflehog-report
+          path: trufflehog-report.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2

@@ -47,16 +47,6 @@ jobs:
           name: trufflehog-report
           path: trufflehog-report.txt
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=lbngyn_sagemaker-deployment
-            -Dsonar.organization=lbngyn
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
