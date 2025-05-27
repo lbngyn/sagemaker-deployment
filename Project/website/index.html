@@ -13,7 +13,7 @@
         }
 
         .container {
-            max-width: 700px; /* Adjusted width slightly */
+            max-width: 700px;
             background-color: #ffffff;
             padding: 30px;
             border-radius: 8px;
@@ -32,7 +32,7 @@
 
         #resultDisplay {
             margin-top: 30px;
-            font-size: 1.5rem; /* Larger text for single result */
+            font-size: 1.5rem;
             font-weight: bold;
             text-align: center;
             padding: 20px;
@@ -49,11 +49,11 @@
 <body>
 
     <div class="container">
-        <h1><i class="bi bi-emoji-smile"></i> Movie Review Sentiment Analysis <i class="bi bi-emoji-frown"></i></h1>
+        <h1></i> Movie Review Sentiment Analysis </h1>
         <p class="lead text-center">Enter your movie review below and click "Analyze" to find out if it's positive or negative.</p>
 
         <form method="POST"
-              action="" onsubmit="return submitForm(this);">
+              action="<API-here>" onsubmit="return submitForm(this);">
             <div class="mb-3">
                 <label for="review" class="form-label"><b>Enter Review:</b></label>
                 <textarea class="form-control" rows="5" id="review" placeholder="Please write your review here."></textarea>
@@ -112,21 +112,17 @@
 
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
-                        // Using your original logic: expecting 0 or 1
                         var result = parseFloat(xhr.responseText); 
                         
                         resultDisplay.style.display = 'block'; // Show the result area
 
                         if (result === 0) {
-                            // Using Bootstrap 5 alert classes
                             resultDisplay.className = 'alert alert-danger';
                             resultDisplay.innerHTML = 'Your review was NEGATIVE!';
                         } else if (result === 1) {
-                            // Using Bootstrap 5 alert classes
                             resultDisplay.className = 'alert alert-success';
                             resultDisplay.innerHTML = 'Your review was POSITIVE!';
                         } else {
-                            // Handle unexpected response
                             resultDisplay.className = 'alert alert-warning';
                             resultDisplay.innerHTML = 'Could not determine sentiment from response.';
                              console.error("Unexpected API Response:", xhr.responseText);
@@ -155,7 +151,6 @@
             xhr.open(oFormElement.method, oFormElement.action, true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
-            // Sending the single review value, like in your original code
             xhr.send(JSON.stringify({ review: reviewInput.value }));
 
             return false; // Prevent default form submission

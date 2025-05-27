@@ -7,7 +7,7 @@
 
 # MLOps: Tự Động Hóa Phân Tích Cảm Xúc với SageMaker, GitHub Actions và CloudFormation
 
-Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để tự động hóa triển khai một mô hình phân tích cảm xúc cho các đánh giá phim. Dự án sử dụng **Amazon SageMaker** để huấn luyện và triển khai mô hình, **GitHub Actions** để thực hiện tích hợp và triển khai liên tục (CI/CD), cùng với **AWS CloudFormation** để quản lý hạ tầng. Đây là sản phẩm của nhóm trong khóa học **DevOps (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
+Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để tự động hóa triển khai một mô hình phân tích cảm xúc cho các đánh giá phim. Dự án sử dụng **Amazon SageMaker** để huấn luyện và triển khai mô hình, **GitHub Actions** để thực hiện tích hợp và triển khai liên tục (CI/CD), cùng với **AWS CloudFormation** để quản lý hạ tầng. Đây là sản phẩm của nhóm trong môn học **Công nghệ DevOps và Ứng dụng (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
 
 ---
 
@@ -15,6 +15,7 @@ Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để 
 
 - [Tổng Quan Dự Án](#tổng-quan-dự-án)
 - [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
+- [Pipeline Dự Án](#pipeline-dự-án)
 - [Hướng Dẫn Cài Đặt](#hướng-dẫn-cài-đặt)
 - [Cách Sử Dụng](#cách-sử-dụng)
 - [Chi Tiết Workflow](#chi-tiết-workflow)
@@ -59,6 +60,25 @@ Dự án không chỉ giải quyết bài toán phân tích cảm xúc mà còn 
 - **Docker**: Đóng gói môi trường huấn luyện và suy luận.
 - **TruffleHog**: Phát hiện thông tin nhạy cảm trong mã nguồn.
 - **Bandit**: Phân tích mã tĩnh để tìm lỗ hổng bảo mật.
+
+---
+
+## Pipeline Dự Án
+Pipeline này tự động hóa quá trình huấn luyện và triển khai mô hình máy học cho ứng dụng phân tích cảm xúc từ các đánh giá phim. Nó được thiết kế để đảm bảo quy trình diễn ra liên tục, đáng tin cậy và giảm thiểu can thiệp thủ công.
+### Quy Trình Huấn Luyện Mô Hình (Model Build Workflow)
+![Pipeline1](Project\image\nt548-pipeline-1.png)
+- **Bước 1**: Kiểm tra chất lượng và bảo mật mã nguồn từ **GitHub** bằng **Bandit** và **TruffleHog**.  
+- **Bước 2**: Xây dựng **Docker Image** từ mã nguồn và đẩy lên **Amazon ECR**.  
+- **Bước 3**: Tiền xử lý dữ liệu thô từ **Data Scientists** và lưu trữ trên **Amazon S3**.  
+- **Bước 4**: Huấn luyện mô hình trên **Amazon SageMaker** sử dụng dữ liệu từ S3.  
+- **Bước 5**: Lưu trữ **Model Artifact** (kết quả huấn luyện) trên S3 để dùng cho triển khai.
+
+### Quy Trình Triển Khai Mô Hình (Model Deploy Workflow)
+![Pipeline1](Project\image\nt548-pipeline-2.png)
+- **Bước 1**: Tải mô hình đã huấn luyện từ **Amazon S3** và triển khai thành điểm cuối trên **Amazon SageMaker**.  
+- **Bước 2**: Xây dựng **Website** để người dùng tương tác với mô hình.  
+- **Bước 3**: Sử dụng **AWS CloudFormation** quản lý hạ tầng, **API Gateway** xử lý yêu cầu API, và **AWS Lambda** thực thi mã không máy chủ.  
+- **Bước 4**: Người dùng gửi đánh giá phim qua website và nhận dự đoán tình cảm từ mô hình.
 
 ---
 
@@ -196,17 +216,16 @@ sagemaker-deployment/
 
 ## Lời Cảm Ơn
 
-Chúng tôi xin gửi lời cảm ơn chân thành đến giảng viên hướng dẫn, **ThS. Lê Anh Tuấn**, vì sự hỗ trợ và định hướng tận tình trong suốt quá trình thực hiện dự án. Đây là kết quả của khóa học **NT548.P21 - DevOps và Ứng dụng** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
+Chúng tôi xin gửi lời cảm ơn chân thành đến giảng viên hướng dẫn, **ThS. Lê Anh Tuấn**, vì sự hỗ trợ và định hướng tận tình trong suốt quá trình thực hiện dự án. Đây là kết quả của môn học **Công nghệ DevOps và Ứng dụng (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
 
 --- 
 ### Thành Viên Nhóm
-- **Lê Bình Nguyên** - 22520969
-- **Đặng Hữu Phát** - 22521065
-- **Châu Thế Vĩ** - 22521653
+| STT | Họ tên               | MSSV     | Email                         |
+| --- | ------------------ | -------- | ----------------------------- |
+| 1   | Lê Bình Nguyên | 22520002 | 22520002@gm.uit.edu.vn       |
+| 2   | Đặng Hữu Phát     | 22521191 | 22521191@gm.uit.edu.vn       |
+| 3   | Châu Thế Vĩ        | 22521653 | 22521653@gm.uit.edu.vn       |
 
-Để liên hệ hoặc đóng góp, vui lòng gửi email:
-- 22520969@gm.uit.edu.vn (Lê Bình Nguyên)
-- 22521065@gm.uit.edu.vn (Đặng Hữu Phát)
-- 22521653@gm.uit.edu.vn (Châu Thế Vĩ)
+Để liên hệ hoặc đóng góp, vui lòng gửi email cho một trong các thành viên trong nhóm.
 
 ---
