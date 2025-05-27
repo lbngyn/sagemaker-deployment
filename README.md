@@ -196,7 +196,7 @@ sagemaker-deployment/
 
 ## Lời Cảm Ơn
 
-Chúng tôi xin gửi lời cảm ơn chân thành đến giảng viên hướng dẫn, **ThS. Lê Anh Tuấn**, vì sự hỗ trợ và định hướng tận tình trong suốt quá trình thực hiện dự án. Đây là kết quả của khóa học **NT548.P21 - DevOps và Ứng dụng** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
+Chúng tôi xin gửi lời cảm ơn chân thành đến giảng viên hướng dẫn, **ThS. Lê Anh Tuấn**, vì sự hỗ trợ và định hướng tận tình trong suốt quá trình thực hiện dự án. Đây là kết quả của môn học **Công nghệ DevOps và Ứng dụng (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
 
 --- 
 ### Thành Viên Nhóm
