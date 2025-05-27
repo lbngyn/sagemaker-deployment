@@ -1,52 +1,204 @@
-# Machine Learning Deployment using AWS SageMaker
+# MLOps: Tự Động Hóa Phân Tích Tình Cảm với SageMaker, GitHub Actions và CloudFormation
 
-Code and associated files 
+Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để tự động hóa triển khai một mô hình phân tích tình cảm cho các đánh giá phim. Dự án sử dụng **Amazon SageMaker** để huấn luyện và triển khai mô hình, **GitHub Actions** để thực hiện tích hợp và triển khai liên tục (CI/CD), cùng với **AWS CloudFormation** để quản lý hạ tầng. Đây là sản phẩm của nhóm trong khóa học **DevOps (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
 
-This repository contains code and associated files for deploying ML models using AWS SageMaker. This repository consists of a number of tutorial notebooks for various coding exercises, mini-projects, and project files that will be used to supplement the lessons of the Nanodegree.
+---
 
-## Table Of Contents
+## Mục Lục
 
-### Tutorials
-* [Boston Housing (Batch Transform) - High Level](https://github.com/udacity/sagemaker-deployment/tree/master/Tutorials/Boston%20Housing%20-%20XGBoost%20(Batch%20Transform)%20-%20High%20Level.ipynb) is the simplest notebook which introduces you to the SageMaker ecosystem and how everything works together. The data used is already clean and tabular so that no additional processing needs to be done. Uses the Batch Transform method to test the fit model.
-* [Boston Housing (Batch Transform) - Low Level](https://github.com/udacity/sagemaker-deployment/tree/master/Tutorials/Boston%20Housing%20-%20XGBoost%20(Batch%20Transform)%20-%20Low%20Level.ipynb) performs the same analysis as the low level notebook, instead using the low level api. As a result it is a little more verbose, however, it has the advantage of being more flexible. It is a good idea to know each of the methods even if you only use one of them.
-* [Boston Housing (Deploy) - High Level](https://github.com/udacity/sagemaker-deployment/blob/master/Tutorials/Boston%20Housing%20-%20XGBoost%20(Deploy)%20-%20High%20Level.ipynb) is a variation on the Batch Transform notebook of the same name. Instead of using Batch Transform to test the model, it deploys and then sends the test data to the deployed endpoint.
-* [Boston Housing (Deploy) - Low Level](https://github.com/udacity/sagemaker-deployment/blob/master/Tutorials/Boston%20Housing%20-%20XGBoost%20(Deploy)%20-%20Low%20Level.ipynb) is again a variant of the Batch Transform notebook above. This time using the low level api and again deploys the model and sends the test data to it rather than using the batch transform method.
-* [IMDB Sentiment Analysis - XGBoost - Web App](https://github.com/udacity/sagemaker-deployment/blob/master/Tutorials/IMDB%20Sentiment%20Analysis%20-%20XGBoost%20-%20Web%20App.ipynb) creates a sentiment analysis model using XGBoost and deploys the model to an endpoint. Then describes how to set up AWS Lambda and API Gateway to create a simple web app that interacts with the deployed endpoint.
-* [Boston Housing (Hyperparameter Tuning) - High Level](https://github.com/udacity/sagemaker-deployment/tree/master/Tutorials/Boston%20Housing%20-%20XGBoost%20(Hyperparameter%20Tuning)%20-%20High%20Level.ipynb) is an extension of the Boston Housing XGBoost model where instead of training a single model, the hyperparameter tuning functionality of SageMaker is used to train a number of different models, ultimately using the best performing model.
-* [Boston Housing (Hyperparameter Tuning) - Low Level](https://github.com/udacity/sagemaker-deployment/tree/master/Tutorials/Boston%20Housing%20-%20XGBoost%20(Hyperparameter%20Tuning)%20-%20Low%20Level.ipynb) is a variation of the high level hyperparameter tuning notebook, this time using the low level api to create each of the objects involved in constructing a hyperparameter tuning job.
-* [Boston Housing - Updating an Endpoint](https://github.com/udacity/sagemaker-deployment/tree/master/Tutorials/Boston%20Housing%20-%20Updating%20an%20Endpoint.ipynb) is another extension of the Boston Housing XGBoost model where in addition we construct a Linear model and switch a deployed endpoint between the two constructed models. In addition, we look at creating an endpoint which simulates performing an A/B test by sending some portion of the incoming inference requests to the XGBoost model and the rest to the Linear model.
+- [Tổng Quan Dự Án](#tổng-quan-dự-án)
+- [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
+- [Hướng Dẫn Cài Đặt](#hướng-dẫn-cài-đặt)
+- [Cách Sử Dụng](#cách-sử-dụng)
+- [Chi Tiết Workflow](#chi-tiết-workflow)
+- [Cấu Trúc Dự Án](#cấu-trúc-dự-án)
+- [Lời Cảm Ơn](#lời-cảm-ơn)
 
-### Mini-Projects
-* [IMDB Sentiment Analysis - XGBoost (Batch Transform)](https://github.com/udacity/sagemaker-deployment/tree/master/Mini-Projects/IMDB%20Sentiment%20Analysis%20-%20XGBoost%20(Batch%20Transform).ipynb) is a notebook that is to be completed which leads you through the steps of constructing a model using XGBoost to perform sentiment analysis on the IMDB dataset.
-* [IMDB Sentiment Analysis - XGBoost (Hyperparameter Tuning)](https://github.com/udacity/sagemaker-deployment/tree/master/Mini-Projects/IMDB%20Sentiment%20Analysis%20-%20XGBoost%20(Hyperparameter%20Tuning).ipynb) is a notebook that is to be completed and which leads you through the steps of constructing a sentiment analysis model using XGBoost and using SageMaker's hyperparameter tuning functionality to test a number of different hyperparameters.
-* [IMDB Sentiment Analysis - XGBoost (Updating a Model)](https://github.com/udacity/sagemaker-deployment/tree/master/Mini-Projects/IMDB%20Sentiment%20Analysis%20-%20XGBoost%20(Updating%20a%20Model).ipynb) is a notebook that is to be completed and which leads you through the steps of constructing a sentiment analysis model using XGBoost and then exploring what happens if something changes in the underlying distribution. After exploring a change in data over time you will construct an updated model and then update a deployed endpoint so that it makes use of the new model.
+---
 
-### Project
+## Tổng Quan Dự Án
 
-[Sentiment Analysis Web App](https://github.com/udacity/sagemaker-deployment/tree/master/Project) is a notebook and collection of Python files to be completed. The result is a deployed RNN performing sentiment analysis on movie reviews complete with publicly accessible API and a simple web page which interacts with the deployed endpoint. This project assumes that you have some familiarity with SageMaker. Completing the XGBoost Sentiment Analysis notebook should suffice.
+Trong thời đại số, các nền tảng trực tuyến tạo ra lượng lớn dữ liệu văn bản, chẳng hạn như đánh giá phim, phản ánh ý kiến và cảm xúc của khán giả. Việc phân tích thủ công những dữ liệu này rất tốn thời gian và dễ xảy ra sai sót. Dự án này giải quyết vấn đề đó bằng cách tự động hóa phân tích tình cảm sử dụng máy học và các thực hành MLOps.
 
-## Setup Instructions
+Hệ thống sử dụng mô hình **Long Short-Term Memory (LSTM)**, được huấn luyện trên tập dữ liệu **IMDB**, để phân loại đánh giá phim thành tích cực hoặc tiêu cực. Các tính năng chính bao gồm:
 
-The notebooks provided in this repository are intended to be executed using Amazon's SageMaker platform. The following is a brief set of instructions on setting up a managed notebook instance using SageMaker, from which the notebooks can be completed and run.
+- **Huấn luyện và Triển khai Mô hình**: Được quản lý bởi Amazon SageMaker.
+- **Quy trình CI/CD**: Tự động hóa bằng GitHub Actions với các workflow `train.yml` và `deploy.yml`.
+- **Quản lý Hạ tầng**: Sử dụng AWS CloudFormation để đảm bảo khả năng mở rộng và tái tạo.
+- **Giao diện Web**: Một ứng dụng web đơn giản được lưu trữ trên Amazon S3, cho phép người dùng tương tác với mô hình qua API.
 
-### Log in to the AWS console and create a notebook instance
+Dự án không chỉ giải quyết bài toán phân tích tình cảm mà còn là một mẫu có thể tái sử dụng để triển khai các mô hình máy học khác theo chuẩn MLOps.
 
-Log in to the AWS console and go to the SageMaker dashboard. Click on 'Create notebook instance'. The notebook name can be anything and using ml.t2.medium is a good idea as it is covered under the free tier. For the role, creating a new role works fine. Using the default options is also okay. Important to note that you need the notebook instance to have access to S3 resources, which it does by default. In particular, any S3 bucket or objectt with sagemaker in the name is available to the notebook.
+---
 
-### Use git to clone the repository into the notebook instance
+## Công Nghệ Sử Dụng
 
-Once the instance has been started and is accessible, click on 'open' to get the Jupyter notebook main page. We will begin by cloning the SageMaker Deployment github repository into the notebook instance. Note that we want to make sure to clone this into the appropriate directory so that the data will be preserved between sessions.
+### Dịch Vụ Đám Mây
+- **Amazon SageMaker**: Huấn luyện, tinh chỉnh và triển khai mô hình LSTM.
+- **Amazon S3**: Lưu trữ dữ liệu huấn luyện, mô hình và ứng dụng web.
+- **Amazon ECR**: Quản lý hình ảnh Docker cho huấn luyện và suy luận.
+- **AWS Lambda**: Xử lý yêu cầu API và tương tác với điểm cuối SageMaker.
+- **Amazon API Gateway**: Tạo và bảo mật API công khai.
+- **AWS CloudFormation**: Quản lý hạ tầng dưới dạng mã (IaC).
+- **Amazon CloudWatch**: Theo dõi các công việc huấn luyện và nhật ký hệ thống.
 
-Click on the 'new' dropdown menu and select 'terminal'. By default, the working directory of the terminal instance is the home directory, however, the Jupyter notebook hub's root directory is under 'SageMaker'. Enter the appropriate directory and clone the repository as follows.
+### Ngôn Ngữ và Framework
+- **Python**: Ngôn ngữ chính cho phát triển mô hình và viết script.
+- **PyTorch**: Framework học sâu dùng để xây dựng mô hình LSTM.
+- **scikit-learn**: Xử lý dữ liệu và đánh giá mô hình.
 
-```bash
-cd SageMaker
-git clone https://github.com/udacity/sagemaker-deployment.git
-exit
+### Công Cụ
+- **GitHub Actions**: Tự động hóa quy trình CI/CD (`train.yml` và `deploy.yml`).
+- **Docker**: Đóng gói môi trường huấn luyện và suy luận.
+- **TruffleHog**: Phát hiện thông tin nhạy cảm trong mã nguồn.
+- **Bandit**: Phân tích mã tĩnh để tìm lỗ hổng bảo mật.
+
+---
+
+## Hướng Dẫn Cài Đặt
+
+Để thiết lập và chạy dự án này trên máy cục bộ hoặc AWS, làm theo các bước sau:
+
+### Yêu Cầu Tiên Quyết
+- Tài khoản **AWS** với quyền truy cập SageMaker, S3, ECR, Lambda, API Gateway và CloudFormation.
+- Tài khoản **GitHub** để truy cập kho lưu trữ và cấu hình CI/CD.
+- **Python 3.9** được cài đặt cục bộ.
+- **Docker** để xây dựng hình ảnh container.
+- **AWS CLI** được cài đặt và cấu hình.
+
+### Các Bước
+1. **Sao Chép Kho Lưu Trữ**
+   ```bash
+   git clone https://github.com/lbngyn/sagemaker-deployment.git
+   cd sagemaker-deployment
+   ```
+
+2. **Cấu Hình Thông Tin AWS**
+   - Thiết lập thông tin xác thực AWS bằng AWS CLI:
+     ```bash
+     aws configure
+     ```
+   - Đảm bảo vai trò IAM của bạn có quyền cần thiết cho các dịch vụ AWS được sử dụng.
+
+3. **Cài Đặt Thư Viện**
+   - Cài đặt các gói Python yêu cầu:
+     ```bash
+     pip install -r requirements.txt
+     ```
+
+4. **Thiết Lập Bí Mật GitHub**
+   - Trong phần cài đặt kho lưu trữ GitHub, thêm các bí mật sau cho CI/CD:
+     - `AWS_ACCESS_KEY_ID`: Khóa truy cập AWS của bạn.
+     - `AWS_SECRET_ACCESS_KEY`: Khóa bí mật AWS của bạn.
+     - `AWS_REGION`: Vùng AWS (ví dụ: `ap-southeast-1`).
+
+5. **Chuẩn Bị Môi Trường**
+   - Đảm bảo Docker đang chạy để xây dựng và đẩy hình ảnh lên Amazon ECR.
+   - Kiểm tra hoặc tạo bucket S3 cho ứng dụng web:
+     ```bash
+     aws s3 mb s3://sentiment-analysis-webapp-nhom21 --region ap-southeast-1
+     ```
+
+---
+
+## Cách Sử Dụng
+
+### Huấn Luyện Mô Hình
+- Quá trình huấn luyện được tự động hóa qua workflow `train.yml`.
+- Để kích hoạt công việc huấn luyện:
+  1. Tạo một pull request vào nhánh `dev`.
+  2. Workflow `train.yml` sẽ:
+     - Thực hiện kiểm tra bảo mật bằng **Bandit** và **TruffleHog**.
+     - Xây dựng và đẩy hình ảnh Docker lên Amazon ECR.
+     - Chạy `Project/train_job.py` để huấn luyện mô hình trên SageMaker.
+  3. Kết quả được đăng dưới dạng bình luận trên pull request bằng **CML**.
+
+### Triển Khai Mô Hình
+- Việc triển khai được kích hoạt bằng cách gộp pull request vào nhánh `master`.
+- Workflow `deploy.yml` sẽ:
+  1. Triển khai mô hình đã huấn luyện dưới dạng điểm cuối SageMaker bằng `Project/deploy.py`.
+  2. Thiết lập API Gateway và Lambda bằng CloudFormation.
+  3. Cập nhật và triển khai ứng dụng web lên S3.
+- URL điểm cuối được ghi lại khi hoàn tất.
+
+### Tương Tác Với Mô Hình Đã Triển Khai
+- Truy cập ứng dụng web tại:
+  ```
+  http://sentiment-analysis-webapp-nhom21.s3-website-ap-southeast-1.amazonaws.com
+  ```
+- Nhập một đánh giá phim (ví dụ: "This movie is awesome!") để nhận dự đoán tình cảm (tích cực/tiêu cực).
+
+---
+
+## Chi Tiết Workflow
+
+### `train.yml` - Quy Trình Huấn Luyện
+- **Kích Hoạt**: Pull request vào nhánh `dev`.
+- **Các Bước**:
+  1. Lấy mã nguồn.
+  2. Thiết lập môi trường Python.
+  3. Cài đặt thư viện.
+  4. Cấu hình thông tin AWS.
+  5. Chạy kiểm tra bảo mật (Bandit, TruffleHog).
+  6. Xây dựng và đẩy hình ảnh Docker lên ECR.
+  7. Chạy công việc huấn luyện SageMaker qua `Project/train_job.py`.
+  8. Đăng kết quả huấn luyện lên pull request.
+
+### `deploy.yml` - Quy Trình Triển Khai
+- **Kích Hoạt**: Push vào nhánh `master`.
+- **Các Bước**:
+  1. Lấy mã nguồn.
+  2. Thiết lập môi trường Python.
+  3. Cài đặt thư viện.
+  4. Cấu hình thông tin AWS.
+  5. Triển khai mô hình lên điểm cuối SageMaker qua `Project/deploy.py`.
+  6. Triển khai stack CloudFormation cho API Gateway và Lambda.
+  7. Cập nhật ứng dụng web với URL API.
+  8. Triển khai ứng dụng web lên S3.
+
+---
+
+## Cấu Trúc Dự Án
+
+```
+sagemaker-deployment/
+├── Project/
+│   ├── train_job.py         # Script định nghĩa và chạy train_job SageMaker
+│   ├── deploy.py           # Script triển khai mô hình lên SageMaker endpoint
+│   ├── website/
+│   │   └──  index.html      # Giao diện ứng dụng web
+│   │   
+│   └── ...                 # Các file dự án khác
+├── .github/
+│   ├── workflows/
+│   │   ├── train.yml       # Workflow CI cho huấn luyện
+│   │   └── deploy.yml      # Workflow CD cho triển khai
+│   └── ...                 # Cấu hình GitHub Actions
+├── Dockerfile              # Định nghĩa Docker Image cho huấn luyện/suy luận
+├── requirements.txt        # Danh sách thư viện Python
+└── README.md               
+                    
 ```
 
-After you have finished, close the terminal window.
+- **`Project/`**: Chứa mã chính cho huấn luyện, triển khai và ứng dụng web.
+- **`.github/workflows/`**: Định nghĩa pipeline CI/CD (`train.yml`, `deploy.yml`).
+- **`Dockerfile`**: Định nghĩa môi trường container.
+- **`requirements.txt`**: Liệt kê các thư viện Python cần thiết.
 
-### Open and run the notebook of your choice
+---
 
-Now that the repository has been cloned into the notebook instance you may navigate to any of the notebooks that you wish to complete or execute and work with them. Any additional instructions are contained in their respective notebooks.
+## Lời Cảm Ơn
+
+Chúng tôi xin gửi lời cảm ơn chân thành đến giảng viên hướng dẫn, **ThS. Lê Anh Tuấn**, vì sự hỗ trợ và định hướng tận tình trong suốt quá trình thực hiện dự án. Đây là kết quả của khóa học **NT548.P21 - DevOps và Ứng dụng** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
+
+### Thành Viên Nhóm
+- **Lê Bình Nguyên** - 22520969
+- **Đặng Hữu Phát** - 22521065
+- **Châu Thế Vĩ** - 22521653
+
+Để liên hệ hoặc đóng góp, vui lòng gửi email:
+- 22520969@gm.uit.edu.vn (Lê Bình Nguyên)
+- 22521065@gm.uit.edu.vn (Đặng Hữu Phát)
+- 22521653@gm.uit.edu.vn (Châu Thế Vĩ)
+
+---
