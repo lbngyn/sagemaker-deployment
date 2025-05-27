@@ -1,6 +1,13 @@
-# MLOps: Tự Động Hóa Phân Tích Tình Cảm với SageMaker, GitHub Actions và CloudFormation
+<p align="center">
+  <a href="https://www.uit.edu.vn/"><img src="https://www.uit.edu.vn/sites/vi/files/banner.png"></a>
 
-Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để tự động hóa triển khai một mô hình phân tích tình cảm cho các đánh giá phim. Dự án sử dụng **Amazon SageMaker** để huấn luyện và triển khai mô hình, **GitHub Actions** để thực hiện tích hợp và triển khai liên tục (CI/CD), cùng với **AWS CloudFormation** để quản lý hạ tầng. Đây là sản phẩm của nhóm trong khóa học **DevOps (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
+<h2 align="center"><b>NT548.P21 - Công nghệ DevOps và Ứng dụng</b></h2>
+
+---
+
+# MLOps: Tự Động Hóa Phân Tích Cảm Xúc với SageMaker, GitHub Actions và CloudFormation
+
+Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để tự động hóa triển khai một mô hình phân tích cảm xúc cho các đánh giá phim. Dự án sử dụng **Amazon SageMaker** để huấn luyện và triển khai mô hình, **GitHub Actions** để thực hiện tích hợp và triển khai liên tục (CI/CD), cùng với **AWS CloudFormation** để quản lý hạ tầng. Đây là sản phẩm của nhóm trong khóa học **DevOps (NT548.P21)** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
 
 ---
 
@@ -18,7 +25,7 @@ Dự án này thể hiện việc áp dụng các nguyên tắc **MLOps** để 
 
 ## Tổng Quan Dự Án
 
-Trong thời đại số, các nền tảng trực tuyến tạo ra lượng lớn dữ liệu văn bản, chẳng hạn như đánh giá phim, phản ánh ý kiến và cảm xúc của khán giả. Việc phân tích thủ công những dữ liệu này rất tốn thời gian và dễ xảy ra sai sót. Dự án này giải quyết vấn đề đó bằng cách tự động hóa phân tích tình cảm sử dụng máy học và các thực hành MLOps.
+Trong thời đại số, các nền tảng trực tuyến tạo ra lượng lớn dữ liệu văn bản, chẳng hạn như đánh giá phim, phản ánh ý kiến và cảm xúc của khán giả. Việc phân tích thủ công những dữ liệu này rất tốn thời gian và dễ xảy ra sai sót. Dự án này giải quyết vấn đề đó bằng cách tự động hóa phân tích cảm xúc sử dụng máy học và các thực hành MLOps.
 
 Hệ thống sử dụng mô hình **Long Short-Term Memory (LSTM)**, được huấn luyện trên tập dữ liệu **IMDB**, để phân loại đánh giá phim thành tích cực hoặc tiêu cực. Các tính năng chính bao gồm:
 
@@ -27,7 +34,7 @@ Hệ thống sử dụng mô hình **Long Short-Term Memory (LSTM)**, được h
 - **Quản lý Hạ tầng**: Sử dụng AWS CloudFormation để đảm bảo khả năng mở rộng và tái tạo.
 - **Giao diện Web**: Một ứng dụng web đơn giản được lưu trữ trên Amazon S3, cho phép người dùng tương tác với mô hình qua API.
 
-Dự án không chỉ giải quyết bài toán phân tích tình cảm mà còn là một mẫu có thể tái sử dụng để triển khai các mô hình máy học khác theo chuẩn MLOps.
+Dự án không chỉ giải quyết bài toán phân tích cảm xúc mà còn là một mẫu có thể tái sử dụng để triển khai các mô hình máy học khác theo chuẩn MLOps.
 
 ---
 
@@ -126,7 +133,7 @@ Dự án không chỉ giải quyết bài toán phân tích tình cảm mà còn
   ```
   http://sentiment-analysis-webapp-nhom21.s3-website-ap-southeast-1.amazonaws.com
   ```
-- Nhập một đánh giá phim (ví dụ: "This movie is awesome!") để nhận dự đoán tình cảm (tích cực/tiêu cực).
+- Nhập một đánh giá phim (ví dụ: "This movie is awesome!") để nhận dự đoán cảm xúc (tích cực/tiêu cực).
 
 ---
 
@@ -191,6 +198,7 @@ sagemaker-deployment/
 
 Chúng tôi xin gửi lời cảm ơn chân thành đến giảng viên hướng dẫn, **ThS. Lê Anh Tuấn**, vì sự hỗ trợ và định hướng tận tình trong suốt quá trình thực hiện dự án. Đây là kết quả của khóa học **NT548.P21 - DevOps và Ứng dụng** tại Trường Đại học Công nghệ Thông tin, Đại học Quốc gia Thành phố Hồ Chí Minh.
 
+--- 
 ### Thành Viên Nhóm
 - **Lê Bình Nguyên** - 22520969
 - **Đặng Hữu Phát** - 22521065
